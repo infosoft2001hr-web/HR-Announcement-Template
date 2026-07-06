@@ -540,12 +540,18 @@ document.querySelectorAll('input,textarea,select').forEach(el=>{
   el.addEventListener('input',()=>{clearTimeout(window._t);window._t=setTimeout(render,250);});
 });
 
+// Canvas does NOT trigger web-font loading on its own, so explicitly load every
+// face (esp. italic + bold-italic, which the page UI never uses) before rendering.
+function ensureFontsThenRender(){
+  const faces=['400 40px ISans','700 40px ISans','italic 400 40px ISans','italic 700 40px ISans','400 40px JBMono','700 40px JBMono'];
+  Promise.all(faces.map(f=>document.fonts.load(f).catch(()=>{}))).then(()=>render());
+}
 // load logos then render
 let loaded=0;
 LOGO_SRC.forEach((src,i)=>{
   const im=new Image();
-  im.onload=()=>{loaded++; if(loaded===LOGO_SRC.length){ document.fonts.ready.then(render); }};
-  im.onerror=()=>{loaded++; if(loaded===LOGO_SRC.length){ document.fonts.ready.then(render); }};
+  im.onload=()=>{loaded++; if(loaded===LOGO_SRC.length){ ensureFontsThenRender(); }};
+  im.onerror=()=>{loaded++; if(loaded===LOGO_SRC.length){ ensureFontsThenRender(); }};
   im.src=src; logos[i]=im;
 });
 </script>
